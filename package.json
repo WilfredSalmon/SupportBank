@@ -1,0 +1,25 @@
+{
+  "name": "supportbank",
+  "version": "1.0.0",
+  "description": "people owe each other money",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WilfredSalmon/SupportBank.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WilfredSalmon/SupportBank/issues"
+  },
+  "homepage": "https://github.com/WilfredSalmon/SupportBank#readme",
+  "dependencies": {
+    "csv": "^5.1.1",
+    "csv-parser": "^2.3.0",
+    "moment": "^2.24.0",
+    "readline-sync": "^1.4.9"
+  }
+}
