@@ -21,21 +21,21 @@ const userInputs = require('./userInputs');
 
 //Vars
 logger.debug('Setting some costants');
-
-const filename = './DodgyTransactions2015.csv';
 const listAllMode = 'List All';
 const listIndivMode = 'List';
+const importMode = 'Import File'
 const welcomeMessage = 'Welcome to the Transaction history calculator';
 
 const menu = `Available commands: 
-${listAllMode} Will list the total of who owes what amount of money
-${listIndivMode} Will give a detailed history of that individual`;
+${listAllMode} \t:list the total of who owes what amount of money
+${listIndivMode} \t: give a detailed history of an individual
+${importMode}  \t:import a different file`;
 
 
 //ENTRY
 //Get the data
 logger.debug('Calling get data');
-const data = getData.getAllData(filename,logger);
+let data = getData.getAllData(logger);
 
 console.log(welcomeMessage);
 
@@ -44,11 +44,15 @@ while (true) {
     const input = userInputs.getInput(menu);
     if (input === listAllMode) {
         logger.debug(`Calling ListAllMode with input ${input}`);
-        listAll.listAll(data.transactions,data.names,logger);
+        listAll.listAll(data,logger);
     } else if (input === listIndivMode) {
         logger.debug(`Calling ListIndivMode with input ${input}`);
-        listIndiv.listIndiv(data.transactions,data.names,logger);
-    } else {
+        listIndiv.listIndiv(data,logger);
+    } else if (input === importMode) {
+        logger.debug(`getting new data with input ${input}`);
+        data = getData.getAllData(logger);
+    }
+    else {
         logger.warn(`Mode was not recognised. Input was ${input}.`);
         console.log(`Mode not recognised. Please try again!`);
     }

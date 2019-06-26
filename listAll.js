@@ -1,6 +1,9 @@
 //Lists the amount everyone owes and is owed
-exports.listAll = function (transactions, names,logger ) {
+exports.listAll = function (data,logger ) {
         logger.debug('Calling listAll');
+        const transactions = data.transactions;
+        const names = data.names;
+
         total = new Object();
 
         for (let i = 0; i < names.length; i++) {
@@ -32,11 +35,11 @@ function printTotal(total,logger) {
 
     for (let i in total) {
         if (total.hasOwnProperty(i)) {
-            logger.debug(`printing ${i}'s Total`)
+            logger.debug(`printing ${i}'s Total`);
             if (total[i] >= 0) {
-                console.log(`${i} is owed £ ${parseFloat(total[i]).toFixed(2)}`)
+                console.log(`${i} is owed £ ${parseFloat(total[i]).toFixed(2)}`);
             } else {
-                console.log(`${i} owes £ ${-parseFloat(total[i]).toFixed(2)}`)
+                console.log(`${i} owes £ ${-parseFloat(total[i]).toFixed(2)}`);
             }
             ;
         }

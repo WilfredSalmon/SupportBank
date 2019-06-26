@@ -16,16 +16,21 @@ function getName(names,logger) {
     }
 }
 
-exports.listIndiv = function(transactions,names,logger) {
+exports.listIndiv = function(data,logger) {
     logger.debug('Called listIndiv. Calling getName')
+    const transactions = data.transactions;
+    const names = data.names;
 
     const name = getName(names,logger);
     logger.debug('getName exited. About to start adding to response')
+
     let response = ``;
+
     for (let i=0;i<transactions.length;i++) {
-        if (transactions[i]['From'] === name || transactions[i]['To'] === name) {
-            const date = moment(transactions[i]['Date'],'DD-MM-YYYY');
-            const formattedDate = date.format("dddd, MMMM Do YYYY, h:mm:ss a");
+        var transaction = transactions[i];
+        if (transaction['From'] === name || transaction['To'] === name) {
+            const date = transaction.getMoment(data.dateFormatType);
+            const formattedDate = date.format("dddd, MMMM Do YYYY");
             logger.debug(`i = ${i}, date = ${formattedDate}`);
 
             if (formattedDate === 'Invalid date') {
@@ -33,7 +38,7 @@ exports.listIndiv = function(transactions,names,logger) {
                 logger.error(`Error, Transaction ${i} has an invalid date`);
             }
 
-            response += `On ${formattedDate}, \t\t${transactions[i]['From']} paid \t${transactions[i]['To']} \t£${transactions[i]['Amount']} for \t${transactions[i]['Narrative']}\n`
+            response += `On ${formattedDate}, \t\t${transaction['From']} paid \t${transaction['To']} \t£${transaction['Amount']} for \t${transaction['Narrative']}\n`
         }
     }
     console.log(response);
