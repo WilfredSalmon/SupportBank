@@ -6,8 +6,8 @@ const moment = require('moment');
 
 //Defines the transaction class
 class Transaction {
-    constructor (date,from,to,narrative,amount) {
-        this.Date = date;
+    constructor (date, from, to, narrative, amount) {
+        this.date = date;
         this.From = from;
         this.To = to;
         this.Narrative = narrative;
@@ -16,14 +16,23 @@ class Transaction {
 
     getMoment(type) {
         if (type === 'csv') {
-            return moment(this.Date,'DD-MM-YYYYY');
+            return moment(this.date, 'DD-MM-YYYYY');
         } else if (type === 'json') {
-            return moment(this.Date,'');
+            return moment(this.date);
         } else {
-            return moment('01-01-1900','DD-MM-YYYY').add(this.Date - 1,'d');
+            return moment('01-01-1900', 'DD-MM-YYYY').add(this.date - 1,'d');
         }
     }
 
+    static fromTransactionProperties(transactionProperties) {
+        return new Transaction(
+            transactionProperties[0],
+            transactionProperties[1],
+            transactionProperties[2],
+            transactionProperties[3],
+            transactionProperties[4]
+        );
+    }
 }
 
 //Defines the data class
@@ -49,13 +58,13 @@ function getFileInfo(logger) {
         logger.debug(`Got file with filename ${filename}`);
         const fileType = getFileType(filename,logger);
 
-        if (fileType===false) {
-                logger.debug('File type was not suuported')
-                return getFileInfo(logger);
-            } else{
+        if (fileType === null) {
+            logger.debug('File type was not supported')
+            return getFileInfo(logger);
+        } else{
             logger.debug(`returning file with anme ${filename} and filetype ${fileType}`)
             return {filename: filename, fileType: fileType};
-            }
+        }
     } else {
         console.log('File not found in directory, please try again');
         logger.warn(`filename ${filename} was not found in the directory`);
@@ -76,21 +85,18 @@ function getFileType(filename,logger) {
     } else {
         logger.debug(`extension ${extension} was not supported`);
         console.log(`The filetype ${extension} is not suuported, please use one of ${supportedTypes.join(', ')}`)
-        return false;
+        return null;
     }
 }
 
 function refactorIntoRequiredForm(tempData,listOfPaths,logger) {
-    const entries = tempData.length;
-    const dataToReturn = new Array(entries);
+    const numberOfEntries = tempData.length;
 
-    for (let i = 0; i < entries; i++) {
-        const transaction = tempData[i];
-        const vals = listOfPaths.map((val) => getNestedObjectElt(transaction,val));
-        logger.debug(`Adding new transaction with values ${vals}`);
-        dataToReturn[i] = new Transaction(vals[0],vals[1],vals[2],vals[3],vals[4]);
-    }
-    return dataToReturn;
+    return tempData.map((transaction) => {
+        const transactionProperties = listOfPaths.map((val) => getNestedObjectElt(transaction,val));
+        logger.debug(`Adding new transaction with values ${transactionProperties}`);
+        return Transaction.fromTransactionProperties(transactionProperties);
+    })
 }
 
 //Gets the transaction data
@@ -131,16 +137,16 @@ function getTransactions(fileinfo,logger) {
 // Gets the names of every person involved in the transactions
 function getNames(transactions,logger) {
     logger.debug('Starting getNames');
-    const names = [];
 
-    for (let i=0; i<transactions.length; i++) {
-        const transaction = transactions[i];
-        if (names.indexOf(transaction['From']) < 0) {names.push(transaction['From']); logger.debug(`Added ${transaction['From']} to names from FROM column`);}
-        if (names.indexOf(transaction['To']) < 0) {names.push(transaction['To']); logger.debug(`Added ${transaction['To']} to names from TO column`);}
-    }
+    const fromNames = transactions.map(transaction => transaction.From);
+    const toNames = transactions.map(transaction => transaction.To);
+    const allNames = fromNames.concat(toNames);
+    const uniqueNames = allNames.filter(function(name, index) {
+        return allNames.indexOf(name) == index;
+    });
+    logger.debug(`Names complete, about to exit getNames with names ${uniqueNames}`);
+    return uniqueNames;
 
-    logger.debug(`Names complete, about to exit getNames with names ${names}`);
-    return names;
 }
 
 exports.getAllData = function(logger) {

@@ -13,7 +13,7 @@ const logger = log4js.getLogger('<index.js>');
 // IMPORTING
 logger.debug('Program Starting. Importing modules');
 const readline = require('readline-sync');
-const getData= require('./getData');
+const getData = require('./getData');
 const listAll = require('./listAll');
 const listIndiv = require('./listIndiv');
 const userInputs = require('./userInputs');
@@ -23,7 +23,7 @@ const userInputs = require('./userInputs');
 logger.debug('Setting some costants');
 const listAllMode = 'List All';
 const listIndivMode = 'List';
-const importMode = 'Import File'
+const importMode = 'Import File';
 const welcomeMessage = 'Welcome to the Transaction history calculator';
 
 const menu = `Available commands: 
@@ -33,11 +33,10 @@ ${importMode}  \t:import a different file`;
 
 
 //ENTRY
+console.log(welcomeMessage);
 //Get the data
 logger.debug('Calling get data');
 let data = getData.getAllData(logger);
-
-console.log(welcomeMessage);
 
 while (true) {
     logger.debug('Entering Transaction screen')
