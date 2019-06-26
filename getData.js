@@ -1,53 +1,10 @@
 const fs = require('fs');
-const csvParse = require('csv-parse/lib/sync');
 const userInputs = require('./userInputs');
-const xmlParse = require('pixl-xml');
-const moment = require('moment');
+const XmlFileParser = require('./XmlFileParser');
+const JsonFileParser = require('./JsonFileParser');
+const CsvFileParser = require('./CsvFileParser');
 
-//Defines the transaction class
-class Transaction {
-    constructor (date, from, to, narrative, amount) {
-        this.date = date;
-        this.From = from;
-        this.To = to;
-        this.Narrative = narrative;
-        this.Amount = amount;
-    }
-
-    getMoment(type) {
-        if (type === 'csv') {
-            return moment(this.date, 'DD-MM-YYYYY');
-        } else if (type === 'json') {
-            return moment(this.date);
-        } else {
-            return moment('01-01-1900', 'DD-MM-YYYY').add(this.date - 1,'d');
-        }
-    }
-
-    static fromTransactionProperties(transactionProperties) {
-        return new Transaction(
-            transactionProperties[0],
-            transactionProperties[1],
-            transactionProperties[2],
-            transactionProperties[3],
-            transactionProperties[4]
-        );
-    }
-}
-
-//Defines the data class
-class Data {
-    constructor(transactions, dateFormatType, names =[]) {
-        this.transactions = transactions;
-        this.dateFormatType = dateFormatType;
-        this.names = names;
-    }
-}
-
-//Gets a nested object element from a path
-function getNestedObjectElt (obj,path) {
-    return path.split('.').reduce((currObj,nextPartOfPath) => currObj[nextPartOfPath],obj);
-}
+let fileParser;
 
 // Gets the filename to import from
 function getFileInfo(logger) {
@@ -89,49 +46,14 @@ function getFileType(filename,logger) {
     }
 }
 
-function refactorIntoRequiredForm(tempData,listOfPaths,logger) {
-    const numberOfEntries = tempData.length;
-
-    return tempData.map((transaction) => {
-        const transactionProperties = listOfPaths.map((val) => getNestedObjectElt(transaction,val));
-        logger.debug(`Adding new transaction with values ${transactionProperties}`);
-        return Transaction.fromTransactionProperties(transactionProperties);
-    })
-}
-
 //Gets the transaction data
-function getTransactions(fileinfo,logger) {
+function getTransactions(filename,fileParser,logger) {
     logger.debug('Getting Transactions called')
-    const data = fs.readFileSync(fileinfo.filename, 'utf8');
+    const data = fs.readFileSync(filename, 'utf8');
     logger.debug('Got data into JS successfully');
 
-    if (fileinfo.fileType === '.csv') {;
-        logger.debug('parsing data as csv');
-        const tempData = csvParse(data, {columns: true, skip_empty_lines: true});
-        logger.debug('Data parsed, now refactoring');
-        const dataToReturn = refactorIntoRequiredForm(tempData, ['Date', 'From', 'To', 'Narrative', 'Amount'],logger);
+    return fileParser.parse(data);
 
-        return new Data(dataToReturn, 'csv');
-
-    } else if (fileinfo.fileType === '.json') {
-        logger.debug('parsing data as json');
-        const tempData = JSON.parse(data);
-        logger.debug('Data parsed, now refactoring');
-        const dataToReturn = refactorIntoRequiredForm(tempData, ['Date', 'FromAccount', 'ToAccount', 'Narrative', 'Amount'],logger);
-
-        return new Data(dataToReturn, 'json');
-
-    } else if (fileinfo.fileType === '.xml'){
-        logger.debug('parsing data as xml');
-        const tempData = xmlParse.parse(data).SupportTransaction;
-        logger.debug('Data parsed, now refactoring');
-        const dataToReturn = refactorIntoRequiredForm(tempData,['Date','Parties.From','Parties.To','Description','Value'],logger);
-        return new Data(dataToReturn,'xml');
-
-    } else {
-        logger.fatal('Somehow got to getTransactions with unsupported filetype');
-        throw 'file Type was not supported and you somehow got through the previous error handling step';
-    }
 }
 
 // Gets the names of every person involved in the transactions
@@ -149,11 +71,30 @@ function getNames(transactions,logger) {
 
 }
 
+function getFileParser(fileType,logger) {
+    switch (fileType) {
+        case '.csv': {
+            return new CsvFileParser(logger);
+        }
+        case '.json': {
+            return new JsonFileParser(logger);
+        }
+        case '.xml': {
+            return new XmlFileParser(logger);
+        }
+        default: {
+            logger.fatal('Somehow got unsupported type to getFileParser')
+            throw 'Somehow got unsupported type to getFileParser'
+        }
+    }
+}
+
 exports.getAllData = function(logger) {
     logger.debug('Getting filename');
     const fileinfo = getFileInfo(logger);
+    const fileParser = getFileParser(fileinfo.fileType,logger);
     logger.debug('Getting Transactions');
-    const data = getTransactions(fileinfo,logger);
+    const data = getTransactions(fileinfo.filename,fileParser,logger);
     logger.debug('Geting Names');
     data.names = getNames(data.transactions,logger);
     logger.debug('Exiting getAllData');
