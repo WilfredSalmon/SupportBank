@@ -12,22 +12,20 @@ exports.listAll = function (data,logger ) {
 
         logger.debug(`total created as ${total}`)
 
-        for (let i = 0; i < transactions.length; i++) {
-            const transaction = transactions[i];
-
+        transactions.map((transaction) => {
             if (isNaN(+transaction['Amount'])) {
                 console.log(`Warning, Transaction no. ${i} has an invalid amount. This is being set to £0.00`);
                 logger.error(`Error, Transaction no. ${i} has an invalid amount`);
                 transaction['Amount'] = 0;
             }
 
-            logger.debug(`Transaction ${i}; Transferring ${+transaction['Amount']} from ${transaction['From']} to ${transaction['To']}`)
+            logger.debug(`Transferring ${+transaction['Amount']} from ${transaction['From']} to ${transaction['To']}`)
             total[transaction['From']] -= +transaction['Amount'];
             total[transaction['To']] += +transaction['Amount'];
-        }
+        })
 
         printTotal(total,logger);
-    }
+}
 
 function printTotal(total,logger) {
     logger.debug('printTotalCalled');
